@@ -89,7 +89,8 @@ async def paid_analysis(
             raise HTTPException(status_code=403, detail=f"Payment verification failed: {verify_result.invalid_message}")
             
         # Optional: Settle payment via facilitator
-        await server.settle_payment(payload, requirements)
+        settle_result = await server.settle_payment(payload, requirements)
+        print(f"SETTLE RESULT TXID: {settle_result.transaction if settle_result else 'None'}")
         
     except Exception as e:
         import traceback
@@ -106,7 +107,7 @@ async def paid_analysis(
     for item in affected:
         counts[item["severity"]] = counts.get(item["severity"], 0) + 1
 
-    return {
+    content = {
         "status": "success",
         "result": {
             "compromised_service": {
@@ -120,6 +121,10 @@ async def paid_analysis(
             "summary": summary
         }
     }
+    return JSONResponse(
+        content=content,
+        headers={"x-transaction-id": str(settle_result.transaction) if settle_result else ""}
+    )
 
 @router.get("/demo-agent/{service_id}")
 async def demo_agent(service_id: int, db: Session = Depends(get_db)):

@@ -206,27 +206,46 @@ async def run_e2e_test():
             
             if res.status_code == 402:
                 print("Status: 402 Payment Required")
+                print(f"Payment Required: {res.headers.get('x-payment-required', 'No')}")
+                
+                # In V2, the header contains a base64 string of the payment required object
+                import base64
+                import json
+                try:
+                    payload_b64 = res.headers.get("x-payment-required")
+                    payload_json = json.loads(base64.b64decode(payload_b64).decode('utf-8'))
+                    requirements = payload_json.get("requirements", [{}])[0]
+                    
+                    print(f"Server demands Asset: {requirements.get('asset', 'Unknown')} at Amount: {requirements.get('amount', 'Unknown')}")
+                except Exception as e:
+                    print(f"Could not parse 402 requirements: {e}")
+                
                 # Parse 402, create payment payload, get headers
                 retry_headers, payload = await x402_http_client.handle_402_response(
                     headers=dict(res.headers),
                     body=res.content
                 )
-                print(f"Payment Required: Yes")
-                print(f"Selected Network: {getattr(payload, 'network', 'Unknown')}")
-                print(f"Constructed Payment Payload for Amount: {getattr(payload, 'amount', 'Unknown')}")
-                print(f"Receiver Address (payTo): {getattr(payload, 'pay_to', 'Unknown')}")
+                
+                if payload:
+                    try:
+                        print(f"Selected Network: {getattr(payload, 'network', getattr(getattr(payload, 'accepted', None), 'network', 'Unknown'))}")
+                        print(f"Constructed Payment Payload for Amount: {getattr(payload, 'amount', getattr(getattr(payload, 'accepted', None), 'amount', 'Unknown'))}")
+                        print(f"Receiver Address (payTo): {getattr(payload, 'pay_to', getattr(getattr(payload, 'accepted', None), 'pay_to', 'Unknown'))}")
+                    except Exception as e:
+                        pass
                 
                 print("\n--- E2E 402 Verification Complete ---")
                 
                 print("--- Submitting Payment / Proof ---")
                 res = await http_client.get(url, headers=retry_headers)
                 
-            print("--- Final Result ---")
-            print("Status:", res.status_code)
+            print("\n--- Final Result ---")
+            print(f"Status: {res.status_code}")
             
             if res.status_code == 200:
+                txid = res.headers.get("x-transaction-id", "Unknown")
+                print("Headers:", res.headers); print(f"Protected analysis successfully retrieved! Transaction ID: {txid}")
                 data = res.json()
-                print("Successfully retrieved protected analysis!")
                 print(f"Compromised Service: {data.get('result', {}).get('compromised_service', {}).get('name')}")
                 print(f"Affected Count: {data.get('result', {}).get('affected_count')}")
                 print(f"Summary: {data.get('result', {}).get('summary')}")
