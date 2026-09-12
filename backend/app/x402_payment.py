@@ -43,8 +43,8 @@ def get_trusttrace_requirements() -> PaymentRequirements:
     return PaymentRequirements(
         network=ALGORAND_TESTNET_CAIP2,
         scheme="exact",
-        asset="ALGO",
-        amount="0.001",
+        asset="0",
+        amount="1000",
         payTo=AVM_ADDRESS,
         description="TrustTrace blast radius analysis",
         maxTimeoutSeconds=3600
@@ -59,33 +59,41 @@ async def paid_analysis(
     server = await get_x402_server()
     requirements = get_trusttrace_requirements()
     
-    payment_header = request.headers.get("x-payment")
+    from x402.http.constants import PAYMENT_SIGNATURE_HEADER
+    payment_header = request.headers.get(PAYMENT_SIGNATURE_HEADER.lower())
+    if not payment_header:
+        payment_header = request.headers.get("x-payment")
     
     if not payment_header:
         # Return genuine 402 with x402 payment requirements
+        from x402.http import encode_payment_required_header
+        from x402.http.constants import PAYMENT_REQUIRED_HEADER
         payment_required = server.create_payment_required_response(requirements=[requirements])
+        header_val = encode_payment_required_header(payment_required)
         return JSONResponse(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             content=payment_required.model_dump(by_alias=True, exclude_none=True),
-            headers={"x-payment-required": "true"}
+            headers={PAYMENT_REQUIRED_HEADER: header_val}
         )
         
     # Process genuine payment
     try:
-        # Decode base64 payload from x-payment header
-        payload_bytes = safe_base64_decode(payment_header)
-        payload = parse_payment_payload(payload_bytes)
+        from x402.http import decode_payment_signature_header
+        payload = decode_payment_signature_header(payment_header)
         
         # Verify via facilitator
         verify_result = await server.verify_payment(payload, requirements)
         
-        if not verify_result.success:
-            raise HTTPException(status_code=403, detail="Payment verification failed")
+        if not verify_result.is_valid:
+            print(f"Verify failed! Reason: {verify_result.invalid_reason}, Message: {verify_result.invalid_message}")
+            raise HTTPException(status_code=403, detail=f"Payment verification failed: {verify_result.invalid_message}")
             
         # Optional: Settle payment via facilitator
         await server.settle_payment(payload, requirements)
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=400, detail=f"Invalid payment: {str(e)}")
 
     # Executing actual TrustTrace analysis after verification

@@ -194,7 +194,7 @@ async def run_e2e_test():
     import httpx
     
     # Initialize the client
-    client = x402Client(x402ClientConfig(schemes=[]))
+    client = x402Client()
     register_exact_avm_client(client, signer, networks=[ALGORAND_TESTNET_CAIP2])
     x402_http_client = x402HTTPClient(client)
     
@@ -216,6 +216,8 @@ async def run_e2e_test():
                 print(f"Constructed Payment Payload for Amount: {getattr(payload, 'amount', 'Unknown')}")
                 print(f"Receiver Address (payTo): {getattr(payload, 'pay_to', 'Unknown')}")
                 
+                print("\n--- E2E 402 Verification Complete ---")
+                
                 print("--- Submitting Payment / Proof ---")
                 res = await http_client.get(url, headers=retry_headers)
                 
@@ -232,7 +234,9 @@ async def run_e2e_test():
                 print("Failed to retrieve analysis:", res.text)
             
     except Exception as e:
-        print("Exception during fetch:", str(e))
+        import traceback
+        print("Exception during fetch:")
+        traceback.print_exc()
         
     print("\n--- Fake Payment Rejection Test ---")
     async with httpx.AsyncClient() as http_client:

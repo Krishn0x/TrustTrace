@@ -53,10 +53,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Allow the Next.js frontend (http://localhost:3000) to call this API
+import os
+
+# Allow the Next.js frontend (http://localhost:3000) or production URL to call this API
+allowed_origins_env = os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

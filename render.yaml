@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: trusttrace-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: PORT
+        value: 8000
+      - key: AVM_ADDRESS
+        value: KN5JDENK2JLI2ACZIYQPNJOHALBI3GWTYLZ4IIP5VI4QO35FHZPTSDRNUY
+      - key: ALLOWED_ORIGINS
+        sync: false
