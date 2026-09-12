@@ -1,0 +1,15 @@
+# TrustTrace backend dependencies
+# Unpinned so pip can pick wheels that match your Python version
+# (Python 3.14 needs recent pydantic/fastapi wheels).
+
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+networkx
+httpx
+apscheduler
+x402
+x402-algorand
+python-dotenv
+mnemonic

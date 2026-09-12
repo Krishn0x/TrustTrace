@@ -1,0 +1,6 @@
+# TrustTrace Mock Logs for Discovery
+# Add or remove dependencies here (Format: From -> To)
+
+Payment Service -> Auth Service
+Auth Service -> Database Service
+Payment Service -> API Gateway

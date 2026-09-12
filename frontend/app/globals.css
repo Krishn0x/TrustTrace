@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global page look */
+body {
+  background: #0b1220;
+  color: #e8eefc;
+}
+
+/* Custom scrollbar so the dashboard stays tidy */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a3a58;
+  border-radius: 8px;
+}
