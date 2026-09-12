@@ -13,3 +13,4 @@ x402
 x402-algorand
 python-dotenv
 mnemonic
+websockets
