@@ -43,7 +43,7 @@ def get_trusttrace_requirements() -> PaymentRequirements:
     return PaymentRequirements(
         network=ALGORAND_TESTNET_CAIP2,
         scheme="exact",
-        asset="0",
+        asset="10458941",
         amount="1000",
         payTo=AVM_ADDRESS,
         description="TrustTrace blast radius analysis",
